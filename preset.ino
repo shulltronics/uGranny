@@ -11,7 +11,7 @@ void grabLastPreset() {
 
 // update the sample objects for the preset:
 void restorePreset(char* name) {
-    if (!file.open(root, name)) {
+    if (!file.open(name)) {
         error("prst");
     } else {
         file.close();

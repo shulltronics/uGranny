@@ -9,6 +9,7 @@
 #include "mg2HW.h"
 #include "Sample.h"
 #include <EEPROM.h>
+#include <SdFat.h>
 #include <WaveHC.h>
 #include <WaveUtil.h>
 // strcpy used when changing sample names
@@ -27,25 +28,17 @@ char presetName[8] = "P00.TXT";
 mg2HW hw;
 
 // Objects to control the SD card, WAV files
-SdReader card;
-FatVolume vol;
-FatReader root;
-FatReader file;
+SdFat vol;
+File file;
 
 // Sample objects .. correspond to each of the big buttons
-Sample S1("A0.WAV");
-Sample S2("A1.WAV");
-Sample S3("A2.WAV");
-Sample S4("A3.WAV");
-Sample S5("A4.WAV");
-Sample S6("A5.WAV");
 Sample samples[NUMBER_OF_BIG_BUTTONS] = {
-    S1,
-    S2,
-    S3,
-    S4,
-    S5,
-    S6
+    Sample("A0.WAV"),
+    Sample("A1.WAV"),
+    Sample("A2.WAV"),
+    Sample("A3.WAV"),
+    Sample("A4.WAV"),
+    Sample("A5.WAV")
 };
 
 // Object to control the player
@@ -68,30 +61,16 @@ void setup() {
     // Init UI hardware
     hw.initialize();
     // SD Card Initialization
-    if (!card.init()) {
-        error("card");
+    if (!vol.begin(10, SPI_HALF_SPEED)) {
+        error(" vol");
     }
-    // enable optimized read (from WaveHC/example/daphc.ino)
-    card.partialBlockRead(true);
-    // FAT volume initialization; assumes only one partition
-    if (!vol.init(card, 1)) {
-        error("vol");
-    }
-
+    
     #ifdef COMS
     putstring("Found FAT");
     Serial.print(vol.fatType(), DEC);
     putstring_nl(" volume! :)");
     #endif
 
-    // Root directory initialization
-    if (!root.openRoot(vol)) {
-        error("root");
-    }
-    #ifdef COMS
-    putstring_nl("Successfully opened root!");
-    #endif
-   
     // Read the preset name from EEPROM
     //grabLastPreset();
     restorePreset(presetName);
@@ -147,7 +126,7 @@ void loop() {
         if (hw.justPressed(UP)) {
             if (wave.isplaying) wave.stop();
             incSampleName(cur_name);            
-            while (!file.open(root, cur_name)) {
+            while (!file.open(cur_name)) {
                 incSampleName(cur_name);
                 hw.displayText("srch");
                 hw.updateDisplay();
@@ -157,7 +136,7 @@ void loop() {
         } else if (hw.justPressed(DOWN)) {
             if (wave.isplaying) wave.stop();
             decSampleName(cur_name);            
-            while (!file.open(root, cur_name)) {
+            while (!file.open(cur_name)) {
                 decSampleName(cur_name);
                 hw.displayText("srch");
                 hw.updateDisplay();
@@ -291,7 +270,7 @@ void playSample(uint8_t s) {
         resetBBLeds();
     }
     // try to open a file by name
-    if (!file.open(root, samples[s].getName())) {
+    if (!file.open(samples[s].getName())) {
         error("file");
     }
     // now try to play it!
