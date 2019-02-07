@@ -18,6 +18,7 @@ public:
     Sample(char _name[7]); // constructor
     char* getName();
     void setName(char _name[7]);
+    void dumpParams();
 };
 
 #endif // Sample_h

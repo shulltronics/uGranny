@@ -8,20 +8,25 @@
 
 #include "mg2HW.h"
 #include "Sample.h"
+#include <EEPROM.h>
 #include <WaveHC.h>
-#ifdef COMS
 #include <WaveUtil.h>
-#endif
 // strcpy used when changing sample names
 #include <string.h>
 
-
+// MIDI controls:
 #define MIDI_CHANNEL 1
+// Midi Mode allows the big buttons to control cur_sample only,
+// not also play a note. Hence samples can be modified after midi sequencing
+bool midiMode = false;
+
+// (Re)store state controls:
+char presetName[8] = "P00.TXT";
 
 // Object to control the UI
 mg2HW hw;
 
-// Object to control the SD card, WAV files
+// Objects to control the SD card, WAV files
 SdReader card;
 FatVolume vol;
 FatReader root;
@@ -34,7 +39,6 @@ Sample S3("A2.WAV");
 Sample S4("A3.WAV");
 Sample S5("A4.WAV");
 Sample S6("A5.WAV");
-// TODO: Make sample for each button selectable!
 Sample samples[NUMBER_OF_BIG_BUTTONS] = {
     S1,
     S2,
@@ -48,27 +52,28 @@ Sample samples[NUMBER_OF_BIG_BUTTONS] = {
 WaveHC wave;
 
 void setup() {
-    
+
     // see midi.ino
     initMidi();
 
     #ifdef COMS
     Serial.begin(9600);
     putstring_nl("Welcome to uGranny custom...");
+    putstring("Restored Preset: ");
+    Serial.println(presetName);
     putstring("S1 name: ");
     Serial.println(S1.getName());
     #endif
+
     // Init UI hardware
     hw.initialize();
-    hw.displayText("test");
     // SD Card Initialization
     if (!card.init()) {
         error("card");
     }
     // enable optimized read (from WaveHC/example/daphc.ino)
     card.partialBlockRead(true);
-    // FAT volume initialization
-    // assumes only one partition
+    // FAT volume initialization; assumes only one partition
     if (!vol.init(card, 1)) {
         error("vol");
     }
@@ -86,6 +91,11 @@ void setup() {
     #ifdef COMS
     putstring_nl("Successfully opened root!");
     #endif
+   
+    // Read the preset name from EEPROM
+    //grabLastPreset();
+    restorePreset(presetName);
+
 }
 
 // variable to hold the most recently played sample;
@@ -125,11 +135,9 @@ void loop() {
         t1 = nowtime;
     }
 
-    receiveREX();
     scanBigButtons();
     adjustSampleRate();
     adjustStartEndPos();
-    receiveREX();
 
     // if you hold the button down and press up / down
     // select the next sample!
@@ -162,7 +170,6 @@ void loop() {
         }
     }
 
-    receiveREX();
     // stop the sample if it's past the current sample end point.
     // TODO: does this belong somewhere else?
     if (wave.isplaying) {
@@ -259,9 +266,13 @@ void adjustSampleRate() {
 // Scan the big buttons for presses and do the stuff
 void scanBigButtons() {
     for (uint8_t i = 0; i < NUMBER_OF_BIG_BUTTONS; i++) {
-        if(hw.justPressed(bigButton[i])) {
-            playSample(i);
-            // update cur_sample
+        if (!midiMode) {
+            if(hw.justPressed(bigButton[i])) {
+                playSample(i);
+                // update cur_sample
+                cur_sample = i;
+            }
+        } else {
             cur_sample = i;
         }
     }

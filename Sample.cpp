@@ -14,3 +14,7 @@ char* Sample::getName() {
 void Sample::setName(char _name[7]) {
     strcpy(name, _name);
 }
+
+uint8_t Sample::dumpParams() {
+    
+}
