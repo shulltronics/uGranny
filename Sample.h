@@ -8,6 +8,8 @@ public:
 
     // sample name
     char name[7];
+    // volume
+    uint8_t vol;
     // Samplerate
     uint16_t sr;
     // Sample start and end positions
@@ -18,7 +20,6 @@ public:
     Sample(char _name[7]); // constructor
     char* getName();
     void setName(char _name[7]);
-    void dumpParams();
 };
 
 #endif // Sample_h

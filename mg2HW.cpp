@@ -169,9 +169,10 @@ boolean mg2HW::knobMoved(unsigned char _KNOB){
 
 // freeze all knobs
 void mg2HW::freezeAllKnobs(){ 
-        for(uint8_t i=0;i<NUMBER_OF_KNOBS;i++){
-                bitWrite(knobFreezedHash,i,true);
-        }
+    for(uint8_t i=0;i<NUMBER_OF_KNOBS;i++){
+        bitWrite(knobFreezedHash,i,true);
+        setLed(knobLed[i], LOW);
+    }
 }
 
 // unfreeze all knobs

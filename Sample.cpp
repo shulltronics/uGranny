@@ -14,7 +14,3 @@ char* Sample::getName() {
 void Sample::setName(char _name[7]) {
     strcpy(name, _name);
 }
-
-void Sample::dumpParams() {
-    return;
-}
