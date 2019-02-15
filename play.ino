@@ -2,7 +2,7 @@
 // ---------- Code by Carsten Thue-Bludworth ------ //
 
 // comment this out to turn off all Serial communication
-#define COMS
+//#define COMS
 // comment this out to turn on/off free sram per second
 //#define RAM_COMS
 
@@ -78,12 +78,12 @@ void setup() {
         #endif
     }
 
-    // see midi.ino
-    //initMidi();
-
     // Read the preset name from EEPROM
     preset = grabLastPreset();
     restorePreset(preset);
+
+    // see midi.ino
+    initMidi();
 
     // Init UI hardware
     hw.initialize();
